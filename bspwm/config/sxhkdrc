@@ -1,0 +1,329 @@
+#  ███████╗██╗  ██╗██╗  ██╗██╗  ██╗██████╗ ██████╗  ██████╗
+#  ██╔════╝╚██╗██╔╝██║  ██║██║ ██╔╝██╔══██╗██╔══██╗██╔════╝
+#  ███████╗ ╚███╔╝ ███████║█████╔╝ ██║  ██║██████╔╝██║
+#  ╚════██║ ██╔██╗ ██╔══██║██╔═██╗ ██║  ██║██╔══██╗██║
+#  ███████║██╔╝ ██╗██║  ██║██║  ██╗██████╔╝██║  ██║╚██████╗
+#  ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝ ╚═════╝
+#	gh0stzk		https://github.com/gh0stzk/dotfiles
+
+# Show help
+super + /
+    OpenApps --KeyHelp
+
+############################
+# ----- Applications ----- #
+############################
+
+# ----- Main Apps ----- #
+
+# Open Terminal (Normal & Floating)
+super + w
+    OpenApps --{terminal}
+
+# App launcher
+super + a
+    OpenApps --menu
+
+# Theme Selector
+super + shift + w
+    RiceSelector
+
+# ----- Your Apps ----- #
+
+# Apps (browser, editor, filemanager)
+super + e
+    dolphin
+
+# Brave 
+super + b
+    brave
+
+# Text Editor 
+super + space
+    /opt/sublime_text/sublime_text
+
+# Terminal apps (yazi, ncmpcpp)
+#super + {y,m}
+#    OpenApps --{yazi,music}
+
+# Media apps (Pavucontrol, Telegram, Whatsapp)
+super +alt+ {p}
+    OpenApps --{soundcontrol}
+
+# Rice Editor App
+super +alt+ r
+    RiceEditor
+
+# ----- Rofi Applets ----- #
+
+#Terminal Selector
+super + alt + t
+    Term --selecterm
+
+# Wallpaper selector
+super + alt + w
+    WallSelect
+
+# Mount Android phones
+super + alt + a
+    OpenApps --android
+
+# Network Manager
+super + alt + n
+    OpenApps --netmanager
+
+# Bluetooth
+super + alt + b
+    OpenApps --bluetooth
+
+# Clipboard
+super + v
+    OpenApps --clipboard
+
+# Screenshot
+Print
+    OpenApps --screenshot
+
+# PowerMenu
+super + alt + p
+    OpenApps --powermenu
+
+# Rofi style
+super + alt + l
+    RofiLauncher --choose-style
+
+# Keyboard Layout Applet
+super + alt + k
+    OpenApps --keyboard
+
+# RofiPass applet
+super + alt + x
+    OpenApps --pass
+
+# ----- Environment Apps ----- #
+
+# Scratchpad
+super + alt + o
+    OpenApps --scratch
+
+# jgmenu
+~button3
+    win=$(xdotool getmouselocation --shell | sed -n 's/^WINDOW=\(.*\)/\1/p'); \
+    type=$(xprop -id "$win" _NET_WM_WINDOW_TYPE 2>/dev/null); \
+    case "$type" in *DESKTOP*) \
+        jgmenu --csv-file="$HOME/.config/bspwm/config/jgmenu.txt" \
+               --config-file="$HOME/.config/bspwm/config/jgmenurc";; esac
+
+# Power off, Reboot, Log out, Lockscreen, kill an app
+ctrl + super + alt + {p,r,q,k,s}
+    {systemctl poweroff, systemctl reboot,bspc quit,xkill,SoftReload}
+ctrl + alt + Delete
+    bspc quit
+super + l
+    ScreenLocker
+
+# Hide/Show Bar (Polybar and/or eww)
+super + alt + {h,u}
+    HideBar {-h,-u}
+
+# Change transparency on focused window
+ctrl + alt + {plus,minus,t}
+    picom-trans {-c -3,-c +3,-c -d}
+
+# Manage brightness
+XF86MonBrightness{Up,Down}
+    sh Brightness {up,down}
+
+# Volume control
+XF86Audio{RaiseVolume,LowerVolume,Mute}
+    Volume{ --inc, --dec, --toggle}
+
+# Music Control
+XF86Audio{Next,Prev,Play,Stop}
+    MediaControl {--next,--previous,--toggle,--stop}
+
+#####################
+# ----- Bspwm ----- #
+#####################
+
+# Reload BSPWM
+super + r
+    bspc wm -r && pkill -USR1 -x sxhkd; dunstify -u low -i ~/.config/bspwm/config/assets/reload.svg 'sxhkd' 'The configuration file has been reloaded successfully!'
+
+# Close/Kill node
+super + {_,shift + }q
+    bspc node -{c,k}
+
+# Reload sxhkd Keybinds
+super + Escape
+    pkill -USR1 -x sxhkd; dunstify -u low -i ~/.config/bspwm/config/assets/reload.svg 'sxhkd' 'The configuration file has been reloaded successfully!'
+
+# ----- Node states and flags ----- #
+
+# Set the node state
+super + {t,shift + t}
+    bspc node -t {tiled,pseudo_tiled}
+
+# Toggle floating/tiled
+super + Tab
+    bspc node -t floating || bspc node -t tiled
+
+# Toggle Fullscreen
+super + f
+    bspc node -t fullscreen || bspc node -t tiled
+
+# Set the node flags
+alt + {m,x,s,p}
+    bspc node -g {marked,locked,sticky,private}
+
+# Hide window
+alt + h
+    HideNode --hide
+
+# Show menu to restore hidden windows
+ctrl + alt + h
+    HideNode --menu
+
+# ----- Focus/Swap Nodes ----- #
+
+# Rotate desktop
+super + j
+    bspc node @/ --rotate 90
+
+# Switch workspace
+super + {Left,Right}
+    bspc desktop -f {prev,next}
+
+# Focus or send to the given desktop
+super + {_,ctrl + }{1-9,0}
+    bspc {desktop -f,node -d} '^{1-9,10}'
+
+# Move window to desktop 1-9 (alternative shortcut)
+super + alt + {1-9,0}
+    bspc node -d '^{1-9,10}'
+
+# Move window to desktop and follow (switch to that desktop)
+super + shift + {1-9,0}
+    bspc node -d '^{1-9,10}' --follow
+
+# Send focused Node to workspace directionally
+super + ctrl + {Left,Right}
+    bspc node -d {prev,next} '--follow'
+
+# Node switcher
+alt + Tab
+    rofi \
+        -theme $HOME/.config/bspwm/config/rofi-themes/Windows.rasi \
+        -show window -window-thumbnail \
+        -window-hide-active-window true \
+        -kb-accept-entry "!Alt-Tab,Return" \
+        -kb-element-next "Alt-Tab"
+
+# Focus the node in the given direction
+super + alt + {Left,Down,Up,Right}
+    { DIR=west FALLBACK=prev; , DIR=south; , DIR=north; , DIR=east FALLBACK=next; } \
+    bspc node -f $DIR.!sticky.!hidden.local || bspc node -f $FALLBACK.leaf.!sticky.!hidden.local
+
+# Swap Nodes
+ctrl + alt + {Left,Down,Up,Right}
+    bspc node -s {west,south,north,east}.local
+
+# Focus the last node/desktop
+ctrl + shift {comma,period}
+    bspc {node,desktop} -f last
+
+# Preselect the direction (horizontal, vertical or cancel)
+super + ctrl {h,v,q}
+    bspc node -p {east,south,cancel}
+
+# ----- Move/Resize Nodes ----- #
+
+# balance desktop's nodes
+super + ctrl + b
+  bspc node @/ -B
+
+# increase/decrease Node
+super + alt + {plus,minus}
+    { \
+       bspc node -z top_right 20 -20 ; bspc node -z bottom_left -20 20; \
+    ,  bspc node -z top_right -20 20 ; bspc node -z bottom_left 20 -20; \
+    }
+
+# increase/decrease FLOATING node size (zoom in/out)
+super + ctrl + {plus,minus}
+    { \
+	xdotool getactivewindow windowmove --relative -- -50 -25 ; xdo resize -w +100 -h +50; \
+	, xdotool getactivewindow windowmove --relative -- +50 +25 ; xdo resize -w -100 -h -50; \
+    }
+
+# Move floating window
+super + shift + {Left,Down,Up,Right}
+    bspc node -v {-20 0,0 20,0 -20,20 0}
+
+# ----- Multi operation functions ----- #
+
+# Close all nodes in current desktop
+super + ctrl + x
+    bspc query -N -d | xargs -I id -n 1 bspc node id -c
+
+# Close/Kill all unfocused local windows
+super + n ; {x,k}
+    bspc query -N -n '.!focused.!marked.local.window' | xargs -I id -n 1 bspc node id {-c,-k}
+
+# Bring all marked windows to the focused desktop
+super + n ; m
+    bspc query -N -n '.marked' | xargs -I id -n 1 bspc node id -d focused --follow
+
+# Bring everything from desktop X to the current desktop
+# Example usage: super + n followed by 5 (brings everything from desktop 5)
+super + n ; {1-9}
+    bspc query -N -d {1-9} -n '.window' | xargs -I id -n 1 bspc node id -d focused
+
+# Laptop monitor - desktops 1-5
+super + {1,2,3,4,5}
+    bspc desktop -f {1,2,3,4,5}
+
+# External monitor - desktops 6-10 using F keys
+super + {F1,F2,F3,F4,F5}
+    bspc desktop -f {6,7,8,9,10}
+
+# Move to laptop desktops (stay)
+super + alt + {1,2,3,4,5}
+    bspc node -d {1,2,3,4,5}
+
+# Move to external desktops (stay)
+super + alt + {F1,F2,F3,F4,F5}
+    bspc node -d {6,7,8,9,10}
+
+# Move to laptop desktops and follow
+super + shift + {1,2,3,4,5}
+    bspc node -d {1,2,3,4,5} --follow
+
+# Move to external desktops and follow
+super + shift + {F1,F2,F3,F4,F5}
+    bspc node -d {6,7,8,9,10} --follow
+
+
+# Custom
+super + p
+    ~/Commands/ds4.sh
+ctrl + shift + Escape
+	missioncenter
+
+
+# Monitor Control
+# Primary monitor only (Ctrl+Alt+1)
+ctrl + alt + 1
+    ~/.config/bspwm/bin/MonitorControl primary
+
+# Secondary monitor only (Ctrl+Alt+2)
+ctrl + alt + 2
+    ~/.config/bspwm/bin/MonitorControl secondary
+
+# Mirror monitors (Ctrl+Alt+3)
+ctrl + alt + 3
+    ~/.config/bspwm/bin/MonitorControl mirror
+
+# Reset monitor setup (Ctrl+Alt+4)
+ctrl + alt + 4
+    ~/.config/bspwm/bin/MonitorControl reset

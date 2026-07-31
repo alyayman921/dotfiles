@@ -1,0 +1,12 @@
+{
+  "clients": {
+    "pylsp": {
+      "enabled": true,
+      "command": ["python", "-m", "pylsp"],
+      "selector": "source.python",
+      "env": {
+        "PYTHONPATH": "/home/aly/Storage/cuhding/Manim/manim/manimlib/__init__.py",
+      },
+    },
+  },
+}

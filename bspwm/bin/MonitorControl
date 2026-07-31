@@ -1,0 +1,56 @@
+#!/bin/sh
+# =============================================================
+# Script Name: MonitorControl
+# Description: Quick monitor switching for bspwm
+# =============================================================
+
+# Get all connected monitors
+MONITORS=$(xrandr | grep " connected" | awk '{print $1}')
+PRIMARY=$(echo "$MONITORS" | head -n1)
+SECONDARY=$(echo "$MONITORS" | tail -n1)
+
+# If only one monitor connected, exit
+if [ $(echo "$MONITORS" | wc -l) -lt 2 ]; then
+    dunstify -u critical "Monitor Setup" "Only one monitor detected"
+    exit 1
+fi
+
+case "$1" in
+    "primary")
+        # Enable only primary monitor
+        xrandr --output "$PRIMARY" --auto --primary
+        xrandr --output "$SECONDARY" --off
+        bspc monitor "$PRIMARY" -d 1 2 3 4 5 6 7 8 9 10
+        bspc wm -O "$PRIMARY"
+        dunstify -u low "Monitor Setup" "Primary monitor only: $PRIMARY"
+        ;;
+    
+    "secondary")
+        # Enable only secondary monitor
+        xrandr --output "$SECONDARY" --auto --primary
+        xrandr --output "$PRIMARY" --off
+        bspc monitor "$SECONDARY" -d 1 2 3 4 5 6 7 8 9 10
+        bspc wm -O "$SECONDARY"
+        dunstify -u low "Monitor Setup" "Secondary monitor only: $SECONDARY"
+        ;;
+    
+    "mirror")
+        # Mirror primary to secondary
+        xrandr --output "$PRIMARY" --auto --primary
+        xrandr --output "$SECONDARY" --same-as "$PRIMARY" --auto
+        bspc monitor "$PRIMARY" -d 1 2 3 4 5 6 7 8 9 10
+        bspc wm -O "$PRIMARY"
+        dunstify -u low "Monitor Setup" "Mirrored: $PRIMARY -> $SECONDARY"
+        ;;
+    
+    "reset")
+        # Run your original MonitorSetup script
+        ~/.config/bspwm/scripts/MonitorSetup
+        dunstify -u low "Monitor Setup" "Reset to normal configuration"
+        ;;
+    
+    *)
+        echo "Usage: MonitorControl {primary|secondary|mirror|reset}"
+        exit 1
+        ;;
+esac

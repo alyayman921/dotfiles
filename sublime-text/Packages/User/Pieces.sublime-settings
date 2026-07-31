@@ -1,0 +1,10 @@
+{
+	"model":"o4-mini-2025-04-16", // Deprecated use "Pieces: Change LLM" instead
+	"auto_start_pieces_os":false, // Open PiecesOS automatically on startup
+	"snippet.autocomplete":false, // auto complete via Pieces saved snippets or not
+	"syntax" : {}, // Langauge extension : syntax path
+	"copilot" : "IDE", // IDE, BROWSER 
+					  // Opens the copilot either in browser or in the sublime IDE it self
+	"auto_check_updates": false  // Check if Pieces for Sublime plugin has an update on startup
+								// Turn this off if Package Control is working fine
+}

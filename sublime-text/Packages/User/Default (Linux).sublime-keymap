@@ -1,0 +1,56 @@
+[
+    { "keys": ["ctrl+shift+1"], "command": "load_tab_set", "args": { "n": 1 } },
+    { "keys": ["ctrl+shift+2"], "command": "load_tab_set", "args": { "n": 2 } },
+    { "keys": ["ctrl+shift+3"], "command": "load_tab_set", "args": { "n": 3 } },
+    { "keys": ["ctrl+shift+4"], "command": "load_tab_set", "args": { "n": 4 } },
+    { "keys": ["ctrl+shift+5"], "command": "load_tab_set", "args": { "n": 5 } },
+    { "keys": ["ctrl+shift+6"], "command": "load_tab_set", "args": { "n": 6 } },
+    { "keys": ["ctrl+shift+7"], "command": "load_tab_set", "args": { "n": 7 } },
+    { "keys": ["ctrl+shift+8"], "command": "load_tab_set", "args": { "n": 8 } },
+    { "keys": ["ctrl+shift+9"], "command": "load_tab_set", "args": { "n": 9 } },
+    {
+        "keys": ["ctrl+shift+b"],
+        "command": "manim_run_scene",
+        "context": [{"key": "selector", "operator": "equal", "operand": "source.python"}]
+    },
+    {
+        "keys": ["ctrl+shift+m"],
+        "command": "manim_checkpoint_paste",
+        "context": [{"key": "selector", "operator": "equal", "operand": "source.python"}]
+    },
+    {
+        "keys": ["ctrl+shift+q"],
+        "command": "manim_exit"
+    },
+    { "keys": ["alt+`"], "command": "toggle_terminus_panel" },  
+    { "keys": ["alt+z"], "command": "toggle_comment", "args": { "block": false } },
+    { "keys": ["alt+c"], "command": "duplicate_line" },
+    { "keys": ["alt+down"], "command": "duplicate_line" },
+    { "keys": ["alt+x"], "command": "run_macro_file", "args": {"file": "res://Packages/Default/Delete Line.sublime-macro"} },
+    { "keys": ["alt+space"], "command": "toggle_side_bar" },
+    { "keys": ["ctrl+shift+`"], "command": "fold_by_level", "args": {"level": 1} },
+    { "keys": ["alt+d"], "command": "indent" },
+    { "keys": ["alt+a"], "command": "unindent" },
+    { "keys": ["alt+w"], "command": "swap_line_up" },
+    { "keys": ["alt+s"], "command": "swap_line_down" },
+
+    { "keys": ["ctrl+alt+s"], "command": "save_all", "args": { "async": true } },
+    { "keys":["ctrl+alt+t"], "command":"save_open_tabs"},
+    {
+        "keys": ["alt+q"],
+        "command": "insert_snippet",
+        "args": { "contents": "($0)" }
+    },
+    {
+        "keys": ["alt+e"],
+        "command": "insert_snippet",
+        "args": { "contents": "{$0}" }
+    },
+    {
+        "keys": ["alt+r"],
+        "command": "insert_snippet",
+        "args": { "contents": "[$0]" }
+    },
+
+]   
+

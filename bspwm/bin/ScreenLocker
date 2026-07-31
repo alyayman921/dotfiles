@@ -1,0 +1,3 @@
+#!/bin/bash
+i3lock -i /home/aly/Wallpapers/1190969.jpg --nofork
+#i3lock -i /home/aly/Wallpapers/bigbossdrawing.jpg --nofork

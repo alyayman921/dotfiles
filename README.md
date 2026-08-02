@@ -26,6 +26,3 @@ if you're not on arch for hyprland don't bother and go next
 
 [Astro](https://github.com/Keyitdev/sddm-astronaut-theme)
 
-[Pixie](https://github.com/xCaptaiN09/pixie-sddm)
-
-

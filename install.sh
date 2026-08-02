@@ -86,23 +86,49 @@ install_hypr() {
     echo "run 'hyprctl reload' to apply changes"
 }
 
-echo "What do you want to install?"
+install_nvim() {
+    local src="$REPO_DIR/nvim"
+    local dest="$HOME/.config/nvim"
+    if [[ ! -d "$src" ]]; then
+        echo "error: no backed-up config found at $src" >&2
+        return 1
+    fi
+
+    echo "files to install:"
+    find "$src" -type f -printf "  %P\n" | sort
+    echo ""
+    confirm || { echo "aborted"; return 0; }
+
+    if [[ -d "$dest" ]] && [[ -n "$(ls -A "$dest" 2>/dev/null)" ]]; then
+        local bak="$dest.bak.$(date +%Y%m%d-%H%M%S)"
+        mv "$dest" "$bak"
+        echo "moved existing config to $bak"
+    fi
+    mkdir -p "$dest"
+    cp -a "$src/." "$dest/"
+    echo "installed files -> $dest"
+}
+
+echo "What do you want to install? (default: all)"
 echo "  1) sublime-text   - Sublime Text settings"
 echo "  2) bspwm          - bspwm config files"
 echo "  3) hypr           - hypr config files"
-echo "  4) all"
+echo "  4) nvim           - nvim config files"
+echo "  5) all"
 echo "  0) quit"
-read -rp "Select [0-4]: " choice
+read -rp "Select [0-5]: " choice
 
-case "$choice" in
+case "${choice:-5}" in
     1) install_sublime ;;
     2) install_bspwm ;;
     3) install_hypr ;;
-    4)
+    4) install_nvim ;;
+    5)
         install_sublime
         install_bspwm
         install_hypr
+        install_nvim
         ;;
-    0|"") exit 0 ;;
+    0) exit 0 ;;
     *) echo "invalid choice" >&2; exit 1 ;;
 esac

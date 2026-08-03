@@ -335,7 +335,7 @@ local plugin_specs = {
     "nvim-zh/better-escape.vim",
     init = function()
       vim.cmd([[
-      let g:better_escape_interval = 200
+      let g:better_escape_interval = 10
     ]])
     end,
     event = { "InsertEnter" },
@@ -366,6 +366,7 @@ local plugin_specs = {
   {
     "tpope/vim-fugitive",
     event = "User InGitRepo",
+    cmd = { "Git", "Gwrite", "Gstatus", "Gdiff", "Gedit", "Gread", "Gblame", "Glog" },
     config = function()
       require("config.fugitive")
     end,

@@ -62,16 +62,16 @@ keymap.set("n", [[\dT]], "<cmd>tabonly<CR>", {
 -- Move the cursor based on physical lines, not the actual lines.
 keymap.set("n", "j", "v:count == 0 ? 'gj' : 'j'", { expr = true })
 keymap.set("n", "k", "v:count == 0 ? 'gk' : 'k'", { expr = true })
-keymap.set("n", "^", "g^")
+keymap.set("n", "!", "g^")
 keymap.set("n", "0", "g0")
 
 -- Ctrl+d scrolls half a page up, Ctrl+f scrolls half a page down
 keymap.set("n", "<C-d>", "<C-u>", { desc = "half page up" })
 keymap.set("n", "<C-f>", "<C-d>", { desc = "half page down" })
 
--- Do not include white space characters when using $ in visual mode,
+-- Do not include white space characters when using @ in visual mode,
 -- see https://vi.stackexchange.com/q/12607/15292
-keymap.set("x", "$", "g_")
+keymap.set("x", "@", "g_")
 
 -- Go to start or end of line easier
 keymap.set({ "n", "x" }, "H", "^")
@@ -81,6 +81,14 @@ keymap.set({ "n", "x" }, "L", "g_")
 -- to reselect previous visual area, see https://superuser.com/q/310417/736190
 keymap.set("x", "<", "<gv")
 keymap.set("x", ">", ">gv")
+
+-- Wrap visual selection with brackets. Uses register z as a scratch register
+-- and `c` (change) so delete+insert is a single undo unit.
+for _, pair in ipairs({ { "(", ")" }, { "[", "]" }, { "{", "}" }, { '"', '"' }, { "'", "'" } }) do
+  keymap.set("x", pair[1], string.format([["zc%s<C-R>z%s<Esc>]], pair[1], pair[2]), {
+    desc = string.format("wrap selection with %s%s", pair[1], pair[2]),
+  })
+end
 
 -- Restart nvim
 keymap.set("n", "<leader>sv", function()
@@ -181,6 +189,16 @@ keymap.set("n", "gB", '<cmd>call buf_utils#GoToBuffer(v:count, "backward")<cr>',
   desc = "go to buffer (backward)",
 })
 
+-- Alt+1..9 goes to the Nth listed buffer (in buffer-list order)
+for i = 1, 9 do
+  keymap.set(
+    "n",
+    string.format("<A-%d>", i),
+    string.format("<cmd>call buf_utils#GoToNthBuffer(%d)<cr>", i),
+    { desc = string.format("go to buffer %d", i) }
+  )
+end
+
 -- Switch windows
 keymap.set("n", "<left>", "<c-w>h")
 keymap.set("n", "<Right>", "<C-W>l")
@@ -222,8 +240,7 @@ end
 -- insert semicolon in the end
 keymap.set("i", "<A-;>", "<Esc>miA;<Esc>`ii")
 
--- Alt+Space (leader) in insert mode exits to normal mode
-keymap.set("i", "<A-Space>", "<Esc>", { desc = "exit insert mode" })
+--
 
 -- Go to the beginning and end of current line in insert mode quickly
 keymap.set("i", "<C-A>", "<HOME>")
@@ -273,3 +290,44 @@ keymap.set("n", "<Esc>", function()
 end, {
   desc = "close floating win",
 })
+
+-- Buffer sets (mirrors sublime save_open_tabs / load_tab_set)
+local buffer_sets = require("buffer_sets")
+keymap.set("n", "<leader>bs", function()
+  buffer_sets.save_open_buffers()
+end, { desc = "save open buffer list to setN.txt" })
+local function make_loader(n)
+  return function()
+    buffer_sets.load_buffer_set(n)
+  end
+end
+local function make_deleter(n)
+  return function()
+    buffer_sets.delete_buffer_set(n)
+  end
+end
+for i = 1, 9 do
+  keymap.set("n", "<leader>b" .. i, make_loader(i), {
+    desc = "load buffer set " .. i .. " from set" .. i .. ".txt",
+  })
+  keymap.set("n", "<leader>br" .. i, make_deleter(i), {
+    desc = "delete buffer set " .. i .. " (set" .. i .. ".txt)",
+  })
+end
+
+-- close current buffer without closing the window
+keymap.set("n", "<leader>brr", "<cmd>bprevious <bar> bdelete #<cr>", {
+  silent = true,
+  desc = "Delete current buffer",
+})
+
+-- close all buffers except the current one
+keymap.set("n", "<leader>bra", function()
+  local buf_ids = vim.api.nvim_list_bufs()
+  local cur_buf = vim.api.nvim_win_get_buf(0)
+  for _, buf_id in pairs(buf_ids) do
+    if vim.api.nvim_get_option_value("buflisted", { buf = buf_id }) and buf_id ~= cur_buf then
+      vim.api.nvim_buf_delete(buf_id, { force = true })
+    end
+  end
+end, { desc = "Delete other buffers" })

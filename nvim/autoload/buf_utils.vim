@@ -25,6 +25,16 @@ function! buf_utils#GoToBuffer(count, direction) abort
   endif
 endfunction
 
+" Go to the {count}-th listed buffer (by buffer list order, not bufnr).
+function! buf_utils#GoToNthBuffer(count) abort
+  let l:nums = s:GetBufNums()
+  if a:count < 1 || a:count > len(l:nums)
+    call v:lua.vim.notify('Invalid buffer index: ' . a:count, 4, {'title': 'nvim-config'})
+    return
+  endif
+  silent execute('buffer ' . l:nums[a:count - 1])
+endfunction
+
 function! s:GetBufNums() abort
   return map(copy(getbufinfo({'buflisted':1})), 'v:val.bufnr')
 endfunction

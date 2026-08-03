@@ -9,6 +9,8 @@ if not vim.uv.fs_stat(python3_path) then
   vim.api.nvim_echo({ { msg } }, true, { err = true })
 else
   vim.g.python3_host_prog = python3_path
+  -- make tools installed in the venv (e.g. ruff) available on PATH
+  vim.env.PATH = vim.fs.dirname(python3_path) .. ":" .. vim.env.PATH
 end
 
 ------------------------------------------------------------------------

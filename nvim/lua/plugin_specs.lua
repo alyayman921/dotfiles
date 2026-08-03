@@ -363,14 +363,14 @@ local plugin_specs = {
   },
 
   -- Git command inside vim
-  {
-    "tpope/vim-fugitive",
-    event = "User InGitRepo",
-    cmd = { "Git", "Gwrite", "Gstatus", "Gdiff", "Gedit", "Gread", "Gblame", "Glog" },
-    config = function()
-      require("config.fugitive")
-    end,
-  },
+  -- {
+  --   "tpope/vim-fugitive",
+  --   event = "User InGitRepo",
+  --   cmd = { "Git", "Gwrite", "Gstatus", "Gdiff", "Gedit", "Gread", "Gblame", "Glog" },
+  --   config = function()
+  --     require("config.fugitive")
+  --   end,
+  -- },
   {
     "NeogitOrg/neogit",
     dependencies = {

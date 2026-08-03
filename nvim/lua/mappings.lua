@@ -242,6 +242,9 @@ keymap.set("i", "<A-;>", "<Esc>miA;<Esc>`ii")
 
 --
 
+-- Alt+Space in insert mode exits to normal mode
+keymap.set("i", "<A-Space>", "<Esc>", { desc = "exit insert mode" })
+
 -- Go to the beginning and end of current line in insert mode quickly
 keymap.set("i", "<C-A>", "<HOME>")
 keymap.set("i", "<C-E>", "<END>")

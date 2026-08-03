@@ -83,21 +83,49 @@ function M.load_buffer_set(n)
   local contents = f:read("*a")
   f:close()
 
-  -- Close everything currently open.
-  vim.cmd("tabdo silent! %bwipeout!")
+  -- Collapse to a single window so no other window keeps a buffer alive.
+  vim.cmd("silent only")
+  vim.cmd("silent tabonly")
 
   local paths = vim.split(contents, "\n", { trimempty = true })
-  for _, p in ipairs(paths) do
-    vim.fn.fnameescape(p)
-  end
 
   if #paths > 0 then
+    -- Open the set files; each becomes a new (or re-matched) buffer.
     for _, p in ipairs(paths) do
       vim.cmd("edit " .. vim.fn.fnameescape(p))
     end
-    local shown = vim.api.nvim_win_get_buf(0)
+
+    -- Build the set of buffers that should survive: the just-opened files.
+    local wanted = {}
+    for _, p in ipairs(paths) do
+      wanted[vim.fn.fnameescape(vim.fn.fnamemodify(p, ":p"))] = true
+    end
+    local function is_wanted(buf)
+      local path = vim.fn.fnameescape(vim.fn.fnamemodify(vim.api.nvim_buf_get_name(buf), ":p"))
+      return wanted[path]
+    end
+
+    -- If the current window still shows the unnamed default buffer (for
+    -- example when a set entry failed to open), switch to an imported buffer
+    -- first. Deleting the buffer shown in the only window would close the last
+    -- window and quit nvim.
+    local cur_buf = vim.api.nvim_win_get_buf(0)
+    if vim.api.nvim_buf_get_name(cur_buf) == "" then
+      for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+        if buf ~= cur_buf and is_wanted(buf) then
+          vim.cmd("buffer " .. buf)
+          cur_buf = vim.api.nvim_win_get_buf(0)
+          break
+        end
+      end
+    end
+
+    -- Wipe every buffer that is not one of the just-opened set files (this
+    -- also closes the leftover empty default buffer), but never the buffer
+    -- shown in the current window (deleting it would close the last window and
+    -- quit nvim).
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-      if vim.api.nvim_buf_get_name(buf) == "" and buf ~= shown then
+      if buf ~= cur_buf and not is_wanted(buf) then
         pcall(vim.api.nvim_buf_delete, buf, { force = true })
       end
     end

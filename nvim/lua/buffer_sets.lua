@@ -83,6 +83,28 @@ function M.load_buffer_set(n)
   local contents = f:read("*a")
   f:close()
 
+  -- Make sure the current window is a normal one before collapsing. If the
+  -- cursor is in the nvim-tree window, `:only` keeps that window and the later
+  -- `:edit` takes over the tree's window, which makes nvim-tree re-open itself
+  -- and can leave nvim with only an NvimTree window (which then auto-quits).
+  local cur_buf = vim.api.nvim_win_get_buf(0)
+  local cur_buftype = vim.api.nvim_get_option_value("buftype", { buf = cur_buf })
+  if cur_buftype ~= "" then
+    local switched = false
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+      local buf = vim.api.nvim_win_get_buf(win)
+      if vim.api.nvim_get_option_value("buftype", { buf = buf }) == "" then
+        vim.api.nvim_set_current_win(win)
+        switched = true
+        break
+      end
+    end
+    if not switched then
+      vim.cmd("vsplit")
+      vim.cmd("enew")
+    end
+  end
+
   -- Collapse to a single window so no other window keeps a buffer alive.
   vim.cmd("silent only")
   vim.cmd("silent tabonly")
@@ -123,9 +145,11 @@ function M.load_buffer_set(n)
     -- Wipe every buffer that is not one of the just-opened set files (this
     -- also closes the leftover empty default buffer), but never the buffer
     -- shown in the current window (deleting it would close the last window and
-    -- quit nvim).
+    -- quit nvim) and never unlisted plugin buffers (e.g. nvim-tree, which
+    -- re-opens itself and can leave nvim with only an NvimTree window).
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-      if buf ~= cur_buf and not is_wanted(buf) then
+      local buflisted = vim.api.nvim_get_option_value("buflisted", { buf = buf })
+      if buflisted and buf ~= cur_buf and not is_wanted(buf) then
         pcall(vim.api.nvim_buf_delete, buf, { force = true })
       end
     end

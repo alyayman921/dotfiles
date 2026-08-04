@@ -84,3 +84,43 @@ function! text_obj#Buffer() abort
   call setpos("'>", [buf_num, line('$'), 1, 0])
   execute 'normal! `<V`>'
 endfunction
+
+" Select the content inside the nearest enclosing bracket pair ((), [], {}).
+function! text_obj#AnyBracket() abort
+  let pairs = [['(', ')'], ['\[', '\]'], ['{', '}']]
+  let best = [0, 0, 0, 0] " open_ln, open_col, close_ln, close_col
+  let best_len = 0
+
+  " If the cursor is on an open/close bracket, nudge it so that the pair is found.
+  let ch = getline('.')[col('.') - 1]
+  if ch ==# '(' || ch ==# '[' || ch ==# '{'
+    normal! l
+  elseif ch ==# ')' || ch ==# ']' || ch ==# '}'
+    normal! h
+  endif
+
+  for pair in pairs
+    let open_pos = searchpairpos(pair[0], '', pair[1], 'bnW')
+    if open_pos == [0, 0]
+      continue
+    endif
+    let close_pos = searchpairpos(pair[0], '', pair[1], 'nW')
+    if close_pos == [0, 0]
+      continue
+    endif
+    let len = (close_pos[0] - open_pos[0]) * 10000 + (close_pos[1] - open_pos[1])
+    if best_len == 0 || len < best_len
+      let best_len = len
+      let best = [open_pos[0], open_pos[1], close_pos[0], close_pos[1]]
+    endif
+  endfor
+
+  if best_len == 0
+    return
+  endif
+
+  let buf_num = bufnr()
+  call setpos("'<", [buf_num, best[0], best[1] + 1, 0])
+  call setpos("'>", [buf_num, best[2], best[3] - 1, 0])
+  execute 'normal! `<v`>'
+endfunction

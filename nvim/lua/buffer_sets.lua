@@ -153,6 +153,16 @@ function M.load_buffer_set(n)
         pcall(vim.api.nvim_buf_delete, buf, { force = true })
       end
     end
+
+    -- Switch to the first buffer of the set.
+    local first = vim.fn.fnameescape(vim.fn.fnamemodify(paths[1], ":p"))
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+      local path = vim.fn.fnameescape(vim.fn.fnamemodify(vim.api.nvim_buf_get_name(buf), ":p"))
+      if path == first and vim.api.nvim_get_option_value("buflisted", { buf = buf }) then
+        vim.cmd("buffer " .. buf)
+        break
+      end
+    end
   end
 end
 

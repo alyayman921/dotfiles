@@ -23,6 +23,39 @@ keymap.set("n", "<leader>q", "<cmd>x<cr>", { silent = true, desc = "quit current
 -- Quit all opened buffers
 keymap.set("n", "<leader>Q", "<cmd>qa!<cr>", { silent = true, desc = "quit nvim" })
 
+-- Toggle LSP on/off for the current buffer
+local toggle_lsp = function()
+  local clients = vim.lsp.get_clients({ bufnr = 0 })
+  if #clients == 0 then
+    vim.cmd("lsp enable")
+    vim.notify("LSP started")
+  else
+    vim.cmd("lsp stop")
+    vim.notify("LSP stopped")
+  end
+end
+keymap.set("n", "<leader>l", toggle_lsp, { desc = "toggle LSP for current buffer" })
+keymap.set("n", "<leader>lt", toggle_lsp, { desc = "toggle LSP for current buffer" })
+
+-- Format/tidy up code using the active LSP server
+local function format_code()
+  local m = vim.fn.mode()
+  if m == "v" or m == "V" or m == "\22" then
+    local s = vim.api.nvim_buf_get_mark(0, "<")
+    local e = vim.api.nvim_buf_get_mark(0, ">")
+    vim.lsp.buf.format {
+      async = true,
+      range = {
+        start = { s[1], s[2] },
+        ["end"] = { e[1], e[2] + 1 },
+      },
+    }
+  else
+    vim.lsp.buf.format { async = true }
+  end
+end
+keymap.set({ "n", "v" }, "<leader>t", format_code, { desc = "format code (LSP)" })
+
 -- Close location list or quickfix list if they are present, see https://superuser.com/q/355325/736190
 keymap.set("n", [[\x]], "<cmd>windo lclose <bar> cclose <cr>", {
   silent = true,
@@ -189,6 +222,14 @@ keymap.set("n", "gB", '<cmd>call buf_utils#GoToBuffer(v:count, "backward")<cr>',
   desc = "go to buffer (backward)",
 })
 
+-- Leader+b: next/previous buffer
+keymap.set("n", "<leader>bn", "<cmd>call buf_utils#GoToBuffer(0, 'forward')<cr>", {
+  desc = "go to next buffer",
+})
+keymap.set("n", "<leader>bb", "<cmd>call buf_utils#GoToBuffer(0, 'backward')<cr>", {
+  desc = "go to previous buffer",
+})
+
 -- Alt+1..9 goes to the Nth listed buffer (in buffer-list order)
 for i = 1, 9 do
   keymap.set(
@@ -210,6 +251,11 @@ keymap.set({ "x", "o" }, "iu", "<cmd>call text_obj#URL()<cr>", { desc = "URL tex
 
 -- Text objects for entire buffer
 keymap.set({ "x", "o" }, "iB", ":<C-U>call text_obj#Buffer()<cr>", { desc = "buffer text object" })
+
+-- Change inside any bracket: (), [] or {}
+keymap.set({ "x", "o" }, "ib", ":<C-U>call text_obj#AnyBracket()<cr>", {
+  desc = "inside any bracket (() [] {})",
+})
 
 -- Do not move my cursor when joining lines.
 keymap.set("n", "J", function()

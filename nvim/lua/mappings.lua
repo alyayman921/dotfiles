@@ -210,6 +210,14 @@ keymap.set(
   { desc = "move selection down" }
 )
 
+-- Indent or unindent current line
+keymap.set("n", "<A-h>", "<<", { desc = "unindent line" })
+keymap.set("n", "<A-l>", ">>", { desc = "indent line" })
+
+-- Indent or unindent visual selection, keeping the selection active
+keymap.set("x", "<A-h>", "<gv", { desc = "unindent selection" })
+keymap.set("x", "<A-l>", ">gv", { desc = "indent selection" })
+
 -- Replace visual selection with text in register, but not contaminate the register,
 -- see also https://stackoverflow.com/q/10723700/6064933.
 keymap.set("x", "p", '"_c<Esc>p')

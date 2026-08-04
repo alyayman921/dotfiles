@@ -29,7 +29,7 @@ alias ls='ls --color=auto'
 alias grep='grep --color=auto'
 PS1='[\u@\h \W]\$ '
 alias asd="source ~/.bashrc"
-export EDITOR=nano
+export EDITOR=nvim
 
 # ROS Setup
 source /opt/ros/noetic/setup.bash

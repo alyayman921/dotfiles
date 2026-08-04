@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+hyprctl switchxkblayout all 0 2>/dev/null
+exec hyprlock "$@"

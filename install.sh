@@ -82,6 +82,22 @@ install_hypr() {
     while IFS= read -r -d '' f; do
         cp -a "$f" "$dest/"
     done < <(find "$src" -maxdepth 1 -type f -print0)
+    # lock screen layouts
+    if [[ -d "$src/hyprlock" ]]; then
+        mkdir -p "$dest/hyprlock"
+        cp -a "$src/hyprlock/." "$dest/hyprlock/"
+    fi
+    # lock helper scripts
+    if [[ -d "$src/bin" ]]; then
+        mkdir -p "$HOME/.local/bin"
+        cp -a "$src/bin/." "$HOME/.local/bin/"
+        chmod +x "$HOME/.local/bin/hyprlock-english" 2>/dev/null || true
+    fi
+    # hyde hyprlock boilerplate
+    if [[ -d "$src/hyde" ]]; then
+        mkdir -p "$HOME/.local/share/hyde"
+        cp -a "$src/hyde/." "$HOME/.local/share/hyde/"
+    fi
     echo "installed files -> $dest"
     echo "run 'hyprctl reload' to apply changes"
 }

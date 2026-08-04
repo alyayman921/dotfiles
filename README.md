@@ -26,3 +26,8 @@ if you're not on arch for hyprland don't bother and go next
 
 [Astro](https://github.com/Keyitdev/sddm-astronaut-theme)
 
+---
+
+# NeoVim Configs
+
+[nvim](https://github.com/jdhao/nvim-config)

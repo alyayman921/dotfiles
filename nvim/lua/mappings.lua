@@ -370,6 +370,66 @@ keymap.set("n", "<leader>brr", "<cmd>bprevious <bar> bdelete #<cr>", {
   desc = "Delete current buffer",
 })
 
+-- Zoom in/out by changing the font size (works in nvim-qt, fvim, neovide).
+-- If the guifont has no size segment (e.g. ":h10" or ":H13"), seed a default
+-- size and append one, so later zooms keep working.
+local zoom_step = 1
+local function kitty_conf_zoom(delta)
+  local conf = vim.fn.expand("~/.config/kitty/kitty.conf")
+  if vim.fn.filereadable(conf) ~= 1 then
+    return
+  end
+  local lines = vim.fn.readfile(conf)
+  for i, line in ipairs(lines) do
+    local prefix = line:match("^(%s*font_size%s+)")
+    if prefix then
+      local cur = line:match("[%d.]+$")
+      if cur then
+        lines[i] = prefix .. string.format("%g", math.max(5, tonumber(cur) + delta))
+        vim.fn.writefile(lines, conf)
+      end
+      return
+    end
+  end
+end
+
+local function zoom_font(delta)
+  -- Running inside kitty: change the real font size via kitty's remote control
+  -- socket, falling back to editing font_size in kitty.conf (which kitty
+  -- hot-reloads) when the socket is unavailable.
+  if vim.env.KITTY_WINDOW_ID then
+    local sock = vim.env.KITTY_LISTEN_ON or (vim.env.XDG_RUNTIME_DIR and vim.env.XDG_RUNTIME_DIR .. "/kitty.sock")
+    if sock then
+      local to = sock:match("^[a-z]+:") and sock or "unix:" .. sock
+      local sign = delta > 0 and "+" or "-"
+      vim.fn.system("kitty @ --to " .. to .. " set-font-size " .. sign .. math.abs(delta))
+      if vim.v.shell_error == 0 then
+        return
+      end
+    end
+    kitty_conf_zoom(delta)
+    return
+  end
+  -- GUI nvim (nvim-qt, fvim, neovide): adjust the guifont size segment.
+  local current = vim.o.guifont
+  if current ~= "" then
+    local size = current:match(":[Hh](%d+)")
+    if size then
+      vim.o.guifont = current:gsub(":[Hh]%d+", ":h" .. math.max(6, tonumber(size) + delta))
+    else
+      vim.o.guifont = current .. ":h" .. math.max(6, 12 + delta)
+    end
+  end
+end
+
+keymap.set("n", "<leader>zi", function()
+  zoom_font(zoom_step)
+end, { desc = "zoom in (increase font size)" })
+
+keymap.set("n", "<leader>zo", function()
+  zoom_font(-zoom_step)
+end, { desc = "zoom out (decrease font size)" })
+
 -- close all buffers except the current one
 keymap.set("n", "<leader>bra", function()
   local buf_ids = vim.api.nvim_list_bufs()

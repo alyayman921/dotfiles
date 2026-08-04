@@ -302,7 +302,14 @@ api.nvim_create_autocmd({ "InsertLeave", "TextChanged" }, {
     local is_modifiable = vim.api.nvim_get_option_value("modifiable", { buf = ev.buf })
 
     if not is_readonly and is_modifiable then
-      vim.cmd([[silent! update]])
+      -- Defer the write so it does not block mode switching (Esc) or typing.
+      vim.schedule(function()
+        if vim.api.nvim_buf_is_valid(ev.buf) then
+          vim.api.nvim_buf_call(ev.buf, function()
+            vim.cmd([[silent! update]])
+          end)
+        end
+      end)
     end
   end,
 })

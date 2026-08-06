@@ -22,3 +22,4 @@ alias oc="cd ~/Storage/cuhding/c/FlightSim && pencode"
 set -gx obsdr /home/aly/Storage/Obsidian/Aly
 export PATH="$HOME/.config/tools/node-v14.15.4-linux-x64/bin:$PATH"
 alias backup='~/cuh/dotfiles/backup.sh'
+alias boot-windows='sudo efibootmgr --bootnext 0000 && sudo reboot'

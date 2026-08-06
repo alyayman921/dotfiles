@@ -23,19 +23,19 @@ keymap.set("n", "<leader>q", "<cmd>x<cr>", { silent = true, desc = "quit current
 -- Quit all opened buffers
 keymap.set("n", "<leader>Q", "<cmd>qa!<cr>", { silent = true, desc = "quit nvim" })
 
--- Toggle LSP on/off for the current buffer
+-- Toggle LSP on/off globally (all clients, not just current buffer)
 local toggle_lsp = function()
-  local clients = vim.lsp.get_clients({ bufnr = 0 })
+  local clients = vim.lsp.get_clients()
   if #clients == 0 then
     vim.cmd("lsp enable")
     vim.notify("LSP started")
   else
-    vim.cmd("lsp stop")
-    vim.notify("LSP stopped")
+    vim.lsp.stop_client(clients)
+    vim.notify("LSP stopped (" .. #clients .. " clients)")
   end
 end
-keymap.set("n", "<leader>l", toggle_lsp, { desc = "toggle LSP for current buffer" })
-keymap.set("n", "<leader>lt", toggle_lsp, { desc = "toggle LSP for current buffer" })
+keymap.set("n", "<leader>l", toggle_lsp, { desc = "toggle LSP globally" })
+keymap.set("n", "<leader>lt", toggle_lsp, { desc = "toggle LSP globally" })
 
 -- Format/tidy up code using the active LSP server
 local function format_code()

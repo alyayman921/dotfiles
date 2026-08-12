@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # DS4 bond snapshot/restore for Arch/bluez 5.87
-#   backup:  sudo bash ~/Commands/ds4-bond.sh backup    (run once, after a good pairing)
-#   restore: sudo bash ~/Commands/ds4-bond.sh restore   (cron @reboot, or anytime the bond is lost)
+#   backup:  sudo bash ~/Documents/Commands/ds4-bond.sh backup    (run once, after a good pairing)
+#   restore: sudo bash ~/Documents/Commands/ds4-bond.sh restore   (cron @reboot, or anytime the bond is lost)
 set -uo pipefail
 
 REAL_USER="${SUDO_USER:-$(whoami)}"
@@ -9,7 +9,7 @@ REAL_HOME="$(getent passwd "$REAL_USER" | cut -d: -f6)"
 
 DEV_MAC="00:1F:E2:D3:B8:8F"
 ADAPTER_MAC="80:91:33:5D:BF:BE"
-BACKUP_DIR="/home/aly/Commands/ds4-bond"
+BACKUP_DIR="/home/aly/Documents/Commands/ds4-bond"
 SRC="/var/lib/bluetooth/${ADAPTER_MAC}/${DEV_MAC}"
 
 say() { echo "==== $* ===="; }

@@ -267,16 +267,16 @@ local plugin_specs = {
     submodules = false, -- not needed, submodules are required only for tests
   },
 
-  {
-    "stevearc/aerial.nvim",
-    -- Optional dependencies
-    dependencies = {
-      "nvim-treesitter/nvim-treesitter",
-    },
-    config = function()
-      require("config.aerial")
-    end,
-  },
+  -- {
+  --   "stevearc/aerial.nvim",
+  --   -- Optional dependencies
+  --   dependencies = {
+  --     "nvim-treesitter/nvim-treesitter",
+  --   },
+  --   config = function()
+  --     require("config.aerial")
+  --   end,
+  -- },
 
   -- Snippet engine and snippet template
   {

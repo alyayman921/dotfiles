@@ -1,0 +1,28 @@
+alias clear='clear && printf "\033[3J"'
+alias ls="lsd"
+alias asd="source ~/.fishrc"
+set -gx PATH /home/aly/cuh/xtensa-esp-elf/bin $PATH
+export PATH="/home/aly/cuh/stmEnv/stm32cubeide_2.1.1/plugins/com.st.stm32cube.ide.mcu.externaltools.gnu-tools-for-stm32.14.3.rel1.linux64_1.0.100.202602081740/tools/bin:$PATH"
+export EDITOR=nvim
+#export PATH="crosstool-NG/builds/xtensa-esp32-elf/bin:/home/aly/cuh/esp/xtensa-esp32s3-elf/bin:/home/aly/cuh/esp/xtensa-esp32s3-elf/xtensa-esp32s3-elf/bin/:$HOME/.local/bin:$PATH"
+set -gx CROSSDEV xtensa-esp-elf-
+alias idf="source /home/aly/cuh/esp/esp-idf/export.fish"
+alias ub22="distrobox enter ub22 -- bash"
+alias conv="cp ~/Documents/conv.sh ~/Storage/Records/'League of Legends'/conv.sh && ~/Storage/Records/'League of Legends'/conv.sh"
+alias cleague="cd ~/Storage/Records/'League of Legends' && rm *"
+
+alias hdd="sudo mount -t ntfs /dev/sdb1 /mnt"
+alias ps4="cat /sys/class/power_supply/ps-controller-battery-00:1f:e2:d3:b8:8f/capacity"
+alias manim="manimgl"
+alias pewds="cd ~/SSD/odysseus && uvicorn app:app --host 0.0.0.0 --port 7000"
+alias ggg="distrobox enter gp"
+clear
+fastfetch
+alias blink="st-flash --reset write ~/cuhding/STM32/blink/Debug/blink.bin 0x8000000"
+alias oc="cd ~/Storage/cuhding/c/FlightSim && pencode"
+set -gx obsdr /home/aly/Storage/Obsidian/Aly
+export PATH="$HOME/.config/tools/node-v14.15.4-linux-x64/bin:$PATH"
+alias backup='~/cuh/dotfiles/backup.sh'
+alias boot-windows='sudo efibootmgr --bootnext 0000 && sudo reboot'
+alias ds4="~/Commands/ds4.sh"
+alias ds4="~/Commands/ds4.sh"

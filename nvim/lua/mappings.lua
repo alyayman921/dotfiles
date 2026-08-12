@@ -1,0 +1,460 @@
+local keymap = vim.keymap
+local uv = vim.uv
+
+-- Save key strokes (now we do not need to press shift to enter command mode).
+keymap.set({ "n", "x" }, ";", ":")
+
+-- Turn the word under cursor to upper case
+keymap.set("i", "<c-u>", "<Esc>viwUea")
+
+-- Turn the current word into title case
+keymap.set("i", "<c-t>", "<Esc>b~lea")
+
+-- Paste non-linewise text above or below current line, see https://stackoverflow.com/a/1346777/6064933
+keymap.set("n", "<leader>p", "m`o<ESC>p``", { desc = "paste below current line" })
+keymap.set("n", "<leader>P", "m`O<ESC>p``", { desc = "paste above current line" })
+
+-- Shortcut for faster save and quit
+keymap.set("n", "<leader>w", "<cmd>update<cr>", { silent = true, desc = "save buffer" })
+
+-- Saves the file if modified and quit
+keymap.set("n", "<leader>q", "<cmd>x<cr>", { silent = true, desc = "quit current window" })
+
+-- Quit all opened buffers
+keymap.set("n", "<leader>Q", "<cmd>qa!<cr>", { silent = true, desc = "quit nvim" })
+
+-- Toggle LSP on/off globally (all clients, not just current buffer)
+local toggle_lsp = function()
+  local clients = vim.lsp.get_clients()
+  if #clients == 0 then
+    vim.cmd("lsp enable")
+    vim.notify("LSP started")
+  else
+    vim.lsp.stop_client(clients)
+    vim.notify("LSP stopped (" .. #clients .. " clients)")
+  end
+end
+keymap.set("n", "<leader>l", toggle_lsp, { desc = "toggle LSP globally" })
+
+-- Format/tidy up code using the active LSP server
+local function format_code()
+  local m = vim.fn.mode()
+  if m == "v" or m == "V" or m == "\22" then
+    local s = vim.api.nvim_buf_get_mark(0, "<")
+    local e = vim.api.nvim_buf_get_mark(0, ">")
+    vim.lsp.buf.format {
+      async = true,
+      range = {
+        start = { s[1], s[2] },
+        ["end"] = { e[1], e[2] + 1 },
+      },
+    }
+  else
+    vim.lsp.buf.format { async = true }
+  end
+end
+keymap.set({ "n", "v" }, "<leader>t", format_code, { desc = "format code (LSP)" })
+
+-- Close location list or quickfix list if they are present, see https://superuser.com/q/355325/736190
+keymap.set("n", [[\x]], "<cmd>windo lclose <bar> cclose <cr>", {
+  silent = true,
+  desc = "close qf and location list",
+})
+
+-- Delete a buffer, without closing the window, see https://stackoverflow.com/q/4465095/6064933
+keymap.set("n", [[\db]], "<cmd>bprevious <bar> bdelete #<cr>", {
+  silent = true,
+  desc = "Delete current buffer",
+})
+
+keymap.set("n", [[\dB]], function()
+  local buf_ids = vim.api.nvim_list_bufs()
+  local cur_buf = vim.api.nvim_win_get_buf(0)
+
+  for _, buf_id in pairs(buf_ids) do
+    -- do not Delete unlisted buffers, which may lead to unexpected errors
+    if vim.api.nvim_get_option_value("buflisted", { buf = buf_id }) and buf_id ~= cur_buf then
+      vim.api.nvim_buf_delete(buf_id, { force = true })
+    end
+  end
+end, {
+  desc = "Delete other buffers",
+})
+
+keymap.set("n", [[\dt]], "<cmd>tabclose<CR>", {
+  silent = true,
+  desc = "Delete current tab",
+})
+
+keymap.set("n", [[\dT]], "<cmd>tabonly<CR>", {
+  silent = true,
+  desc = "Delete other tabs",
+})
+
+-- Move the cursor based on physical lines, not the actual lines.
+keymap.set("n", "j", "v:count == 0 ? 'gj' : 'j'", { expr = true })
+keymap.set("n", "k", "v:count == 0 ? 'gk' : 'k'", { expr = true })
+keymap.set("n", "!", "g^")
+keymap.set("n", "0", "g0")
+
+-- Ctrl+d scrolls half a page up, Ctrl+f scrolls half a page down
+keymap.set("n", "<C-d>", "<C-u>", { desc = "half page up" })
+keymap.set("n", "<C-f>", "<C-d>", { desc = "half page down" })
+
+-- Do not include white space characters when using @ in visual mode,
+-- see https://vi.stackexchange.com/q/12607/15292
+keymap.set("x", "@", "g_")
+
+-- Go to start or end of line easier
+keymap.set({ "n", "x" }, "H", "^")
+keymap.set({ "n", "x" }, "L", "g_")
+
+-- Continuous visual shifting (does not exit Visual mode), `gv` means
+-- to reselect previous visual area, see https://superuser.com/q/310417/736190
+keymap.set("x", "<", "<gv")
+keymap.set("x", ">", ">gv")
+
+-- Wrap visual selection with brackets. Uses register z as a scratch register
+-- and `c` (change) so delete+insert is a single undo unit.
+for _, pair in ipairs({ { "(", ")" }, { "[", "]" }, { "{", "}" }, { '"', '"' }, { "'", "'" } }) do
+  keymap.set("x", pair[1], string.format([["zc%s<C-R>z%s<Esc>]], pair[1], pair[2]), {
+    desc = string.format("wrap selection with %s%s", pair[1], pair[2]),
+  })
+end
+
+-- Restart nvim
+keymap.set("n", "<leader>sv", function()
+  vim.print("Use ZR to restart nvim instead!")
+end)
+
+keymap.set("n", "ZR", function()
+  local current_buf_path = vim.fn.expand("%")
+  local restart_cmd = string.format("restart edit %s", current_buf_path)
+  vim.cmd(restart_cmd)
+end, {
+  silent = true,
+  desc = "Restart nvim",
+})
+
+-- Reselect the text that has just been pasted, see also https://stackoverflow.com/a/4317090/6064933.
+keymap.set("n", "<leader>v", "printf('`[%s`]', getregtype()[0])", {
+  expr = true,
+  desc = "reselect last pasted area",
+})
+
+-- Re-highlight the last Visual selection (equivalent to `gv`)
+keymap.set("n", "<leader>gv", "gv", { desc = "reselect last visual selection" })
+
+-- Always use very magic mode for searching
+-- keymap.set("n", "/", [[/\v]])
+
+-- Search in selected region
+-- xnoremap / :<C-U>call feedkeys('/\%>'.(line("'<")-1).'l\%<'.(line("'>")+1)."l")<CR>
+
+-- Change current working directory locally and print cwd after that,
+-- see https://vim.fandom.com/wiki/Set_working_directory_to_the_current_file
+keymap.set("n", "<leader>cd", "<cmd>lcd %:p:h<cr><cmd>pwd<cr>", { desc = "change cwd" })
+
+-- Use Esc to quit builtin terminal
+keymap.set("t", "<Esc>", [[<c-\><c-n>]])
+
+-- Toggle spell checking
+keymap.set("n", "<F11>", "<cmd>set spell!<cr>", { desc = "toggle spell" })
+keymap.set("i", "<F11>", "<c-o><cmd>set spell!<cr>", { desc = "toggle spell" })
+
+-- Change text without putting it into the vim register,
+-- see https://stackoverflow.com/q/54255/6064933
+keymap.set("n", "c", '"_c')
+keymap.set("n", "C", '"_C')
+keymap.set("n", "cc", '"_cc')
+keymap.set("x", "c", '"_c')
+
+-- Remove trailing whitespace characters
+keymap.set(
+  "n",
+  "<leader><space>",
+  "<cmd>StripTrailingWhitespace<cr>",
+  { desc = "remove trailing space" }
+)
+
+-- Copy entire buffer.
+keymap.set("n", "<leader>y", "<cmd>%yank<cr>", { desc = "yank entire buffer" })
+
+-- Toggle cursor column
+keymap.set(
+  "n",
+  "<leader>cl",
+  "<cmd>call utils#ToggleCursorCol()<cr>",
+  { desc = "toggle cursor column" }
+)
+
+-- Move current line up and down
+keymap.set(
+  "n",
+  "<A-k>",
+  '<cmd>call utils#SwitchLine(line("."), "up")<cr>',
+  { desc = "move line up" }
+)
+keymap.set(
+  "n",
+  "<A-j>",
+  '<cmd>call utils#SwitchLine(line("."), "down")<cr>',
+  { desc = "move line down" }
+)
+
+-- Move current line up/down while staying in insert mode
+keymap.set("i", "<A-k>", "<Esc><cmd>call utils#SwitchLine(line('.'), 'up')<cr>gi", {
+  desc = "move line up (insert mode)",
+})
+keymap.set("i", "<A-j>", "<Esc><cmd>call utils#SwitchLine(line('.'), 'down')<cr>gi", {
+  desc = "move line down (insert mode)",
+})
+
+-- Move current visual-line selection up and down
+keymap.set("x", "<A-k>", '<cmd>call utils#MoveSelection("up")<cr>', { desc = "move selection up" })
+
+keymap.set(
+  "x",
+  "<A-j>",
+  '<cmd>call utils#MoveSelection("down")<cr>',
+  { desc = "move selection down" }
+)
+
+-- Indent or unindent current line
+keymap.set("n", "<A-h>", "<<", { desc = "unindent line" })
+keymap.set("n", "<A-l>", ">>", { desc = "indent line" })
+
+-- Indent or unindent visual selection, keeping the selection active
+keymap.set("x", "<A-h>", "<gv", { desc = "unindent selection" })
+keymap.set("x", "<A-l>", ">gv", { desc = "indent selection" })
+
+-- Replace visual selection with text in register, but not contaminate the register,
+-- see also https://stackoverflow.com/q/10723700/6064933.
+keymap.set("x", "p", '"_c<Esc>p')
+
+-- Go to a certain buffer
+keymap.set("n", "gb", '<cmd>call buf_utils#GoToBuffer(v:count, "forward")<cr>', {
+  desc = "go to buffer (forward)",
+})
+keymap.set("n", "gB", '<cmd>call buf_utils#GoToBuffer(v:count, "backward")<cr>', {
+  desc = "go to buffer (backward)",
+})
+
+-- Leader+b: next/previous buffer
+keymap.set("n", "<leader>bn", "<cmd>call buf_utils#GoToBuffer(0, 'forward')<cr>", {
+  desc = "go to next buffer",
+})
+keymap.set("n", "<leader>bb", "<cmd>call buf_utils#GoToBuffer(0, 'backward')<cr>", {
+  desc = "go to previous buffer",
+})
+
+-- Alt+1..9 goes to the Nth listed buffer (in buffer-list order)
+for i = 1, 9 do
+  keymap.set(
+    "n",
+    string.format("<A-%d>", i),
+    string.format("<cmd>call buf_utils#GoToNthBuffer(%d)<cr>", i),
+    { desc = string.format("go to buffer %d", i) }
+  )
+end
+
+-- Switch windows
+keymap.set("n", "<left>", "<c-w>h")
+keymap.set("n", "<Right>", "<C-W>l")
+keymap.set("n", "<Up>", "<C-W>k")
+keymap.set("n", "<Down>", "<C-W>j")
+
+-- Text objects for URL
+keymap.set({ "x", "o" }, "iu", "<cmd>call text_obj#URL()<cr>", { desc = "URL text object" })
+
+-- Text objects for entire buffer
+keymap.set({ "x", "o" }, "iB", ":<C-U>call text_obj#Buffer()<cr>", { desc = "buffer text object" })
+
+-- Change inside any bracket: (), [] or {}
+keymap.set({ "x", "o" }, "ib", ":<C-U>call text_obj#AnyBracket()<cr>", {
+  desc = "inside any bracket (() [] {})",
+})
+
+-- Do not move my cursor when joining lines.
+keymap.set("n", "J", function()
+  vim.cmd([[
+      normal! mzJ`z
+      delmarks z
+    ]])
+end, {
+  desc = "join lines without moving cursor",
+})
+
+keymap.set("n", "gJ", function()
+  -- we must use `normal!`, otherwise it will trigger recursive mapping
+  vim.cmd([[
+      normal! mzgJ`z
+      delmarks z
+    ]])
+end, {
+  desc = "join lines without moving cursor",
+})
+
+-- Break inserted text into smaller undo units when we insert some punctuation chars.
+local undo_ch = { ",", ".", "!", "?", ";", ":" }
+for _, ch in ipairs(undo_ch) do
+  keymap.set("i", ch, ch .. "<c-g>u")
+end
+
+-- insert semicolon in the end
+keymap.set("i", "<A-;>", "<Esc>miA;<Esc>`ii")
+
+--
+
+-- Alt+Space in insert mode exits to normal mode
+keymap.set("i", "<A-Space>", "<Esc>", { desc = "exit insert mode" })
+
+-- Go to the beginning and end of current line in insert mode quickly
+keymap.set("i", "<C-A>", "<HOME>")
+keymap.set("i", "<C-E>", "<END>")
+
+-- Go to beginning of command in command-line mode
+keymap.set("c", "<C-A>", "<HOME>")
+
+-- Delete the character to the right of the cursor
+keymap.set("i", "<C-D>", "<DEL>")
+
+keymap.set("n", "<leader>cb", function()
+  local cnt = 0
+  local blink_times = 7
+  local timer = uv.new_timer()
+  if timer == nil then
+    return
+  end
+
+  timer:start(
+    0,
+    100,
+    vim.schedule_wrap(function()
+      vim.cmd([[
+      set cursorcolumn!
+      set cursorline!
+    ]])
+
+      if cnt == blink_times then
+        timer:close()
+      end
+
+      cnt = cnt + 1
+    end)
+  )
+end, { desc = "show cursor" })
+
+keymap.set("n", "q", function()
+  vim.print("q is remapped to Q in Normal mode!")
+end)
+keymap.set("n", "Q", "q", {
+  desc = "Record macro",
+})
+
+keymap.set("n", "<Esc>", function()
+  vim.cmd("fclose!")
+end, {
+  desc = "close floating win",
+})
+
+-- Buffer sets (mirrors sublime save_open_tabs / load_tab_set)
+local buffer_sets = require("buffer_sets")
+keymap.set("n", "<leader>bs", function()
+  buffer_sets.save_open_buffers()
+end, { desc = "save open buffer list to setN.txt" })
+local function make_loader(n)
+  return function()
+    buffer_sets.load_buffer_set(n)
+  end
+end
+local function make_deleter(n)
+  return function()
+    buffer_sets.delete_buffer_set(n)
+  end
+end
+for i = 1, 9 do
+  keymap.set("n", "<leader>b" .. i, make_loader(i), {
+    desc = "load buffer set " .. i .. " from set" .. i .. ".txt",
+  })
+  keymap.set("n", "<leader>br" .. i, make_deleter(i), {
+    desc = "delete buffer set " .. i .. " (set" .. i .. ".txt)",
+  })
+end
+
+-- close current buffer without closing the window
+keymap.set("n", "<leader>brr", "<cmd>bprevious <bar> bdelete #<cr>", {
+  silent = true,
+  desc = "Delete current buffer",
+})
+
+-- Zoom in/out by changing the font size (works in nvim-qt, fvim, neovide).
+-- If the guifont has no size segment (e.g. ":h10" or ":H13"), seed a default
+-- size and append one, so later zooms keep working.
+local zoom_step = 1
+local function kitty_conf_zoom(delta)
+  local conf = vim.fn.expand("~/.config/kitty/kitty.conf")
+  if vim.fn.filereadable(conf) ~= 1 then
+    return
+  end
+  local lines = vim.fn.readfile(conf)
+  for i, line in ipairs(lines) do
+    local prefix = line:match("^(%s*font_size%s+)")
+    if prefix then
+      local cur = line:match("[%d.]+$")
+      if cur then
+        lines[i] = prefix .. string.format("%g", math.max(5, tonumber(cur) + delta))
+        vim.fn.writefile(lines, conf)
+      end
+      return
+    end
+  end
+end
+
+local function zoom_font(delta)
+  -- Running inside kitty: change the real font size via kitty's remote control
+  -- socket, falling back to editing font_size in kitty.conf (which kitty
+  -- hot-reloads) when the socket is unavailable.
+  if vim.env.KITTY_WINDOW_ID then
+    local sock = vim.env.KITTY_LISTEN_ON or (vim.env.XDG_RUNTIME_DIR and vim.env.XDG_RUNTIME_DIR .. "/kitty.sock")
+    if sock then
+      local to = sock:match("^[a-z]+:") and sock or "unix:" .. sock
+      local sign = delta > 0 and "+" or "-"
+      vim.fn.system("kitty @ --to " .. to .. " set-font-size " .. sign .. math.abs(delta))
+      if vim.v.shell_error == 0 then
+        return
+      end
+    end
+    kitty_conf_zoom(delta)
+    return
+  end
+  -- GUI nvim (nvim-qt, fvim, neovide): adjust the guifont size segment.
+  local current = vim.o.guifont
+  if current ~= "" then
+    local size = current:match(":[Hh](%d+)")
+    if size then
+      vim.o.guifont = current:gsub(":[Hh]%d+", ":h" .. math.max(6, tonumber(size) + delta))
+    else
+      vim.o.guifont = current .. ":h" .. math.max(6, 12 + delta)
+    end
+  end
+end
+
+keymap.set("n", "<leader>zi", function()
+  zoom_font(zoom_step)
+end, { desc = "zoom in (increase font size)" })
+
+keymap.set("n", "<leader>zo", function()
+  zoom_font(-zoom_step)
+end, { desc = "zoom out (decrease font size)" })
+
+-- close all buffers except the current one
+keymap.set("n", "<leader>bra", function()
+  local buf_ids = vim.api.nvim_list_bufs()
+  local cur_buf = vim.api.nvim_win_get_buf(0)
+  for _, buf_id in pairs(buf_ids) do
+    if vim.api.nvim_get_option_value("buflisted", { buf = buf_id }) and buf_id ~= cur_buf then
+      vim.api.nvim_buf_delete(buf_id, { force = true })
+    end
+  end
+end, { desc = "Delete other buffers" })

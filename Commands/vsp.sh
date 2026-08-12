@@ -1,0 +1,2 @@
+setsid env -u WAYLAND_DISPLAY -u LD_LIBRARY_PATH DISPLAY=:0 vsp
+exit

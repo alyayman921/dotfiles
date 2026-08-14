@@ -129,8 +129,14 @@ RestartSec=2
 [Install]
 WantedBy=multi-user.target
 UNIT
+# Drop-in: also pull bt-agent in when bluetooth.service starts. Without this,
+# PartOf=bluetooth.service stops the agent whenever bluetooth restarts and it
+# never comes back -> reconnects silently break after boot/restarts.
+mkdir -p /etc/systemd/system/bt-agent.service.d
+printf '[Install]\nWantedBy=bluetooth.service\n' > /etc/systemd/system/bt-agent.service.d/restart-with-bluetooth.conf
 systemctl daemon-reload
-systemctl enable --now bt-agent.service 2>&1
+systemctl enable bt-agent.service 2>&1
+systemctl start bt-agent.service 2>&1
 sleep 1
 systemctl is-active bt-agent.service
 

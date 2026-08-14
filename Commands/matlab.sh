@@ -1,1 +1,1 @@
-/home/aly/SSD/matlab/bin/matlab -desktop -nosplash
+/home/aly/extuh/matlab/bin/matlab -desktop -nosplash

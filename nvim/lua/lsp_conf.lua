@@ -1,5 +1,18 @@
 local utils = require("utils")
 
+-- clangd marks inactive preprocessor branches (#ifdef not taken) with
+-- semantic tokens of type "comment", which get greyed out as if they were
+-- comments. Clear the group for C/C++ so those regions keep normal syntax
+-- highlighting. Applied on ColorScheme because the colorscheme loads after
+-- this file and would otherwise re-link the group to Comment.
+vim.api.nvim_create_autocmd("ColorScheme", {
+  group = vim.api.nvim_create_augroup("lsp_clear_inactive_comment_hl", { clear = true }),
+  callback = function()
+    vim.api.nvim_set_hl(0, "@lsp.type.comment.c", {})
+    vim.api.nvim_set_hl(0, "@lsp.type.comment.cpp", {})
+  end,
+})
+
 vim.api.nvim_create_autocmd("LspAttach", {
   group = vim.api.nvim_create_augroup("lsp_buf_conf", { clear = true }),
   callback = function(event_context)

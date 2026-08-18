@@ -36,6 +36,12 @@ local toggle_lsp = function()
 end
 keymap.set("n", "<leader>l", toggle_lsp, { desc = "toggle LSP globally" })
 
+-- Toggle line numbers (absolute + relative) on/off
+keymap.set("n", "<leader>un", function()
+  vim.opt.number = not vim.opt.number:get()
+  vim.opt.relativenumber = not vim.opt.relativenumber:get()
+end, { desc = "toggle line numbers" })
+
 -- Format/tidy up code using the active LSP server
 local function format_code()
   local m = vim.fn.mode()
@@ -169,12 +175,12 @@ keymap.set("n", "C", '"_C')
 keymap.set("n", "cc", '"_cc')
 keymap.set("x", "c", '"_c')
 
--- Remove trailing whitespace characters
+-- Switch to the next window (cycles through splits, e.g. between the file tree and the current buffer)
 keymap.set(
   "n",
   "<leader><space>",
-  "<cmd>StripTrailingWhitespace<cr>",
-  { desc = "remove trailing space" }
+  "<cmd>wincmd w<cr>",
+  { desc = "switch to next window" }
 )
 
 -- Copy entire buffer.
@@ -391,7 +397,9 @@ keymap.set("n", "<leader>brr", "<cmd>bprevious <bar> bdelete #<cr>", {
 -- Zoom in/out by changing the font size (works in nvim-qt, fvim, neovide).
 -- If the guifont has no size segment (e.g. ":h10" or ":H13"), seed a default
 -- size and append one, so later zooms keep working.
-local zoom_step = 1
+local zoom_step = 4
+-- Floor for the font size so zooming out can't become unreadable.
+local min_size = 10
 local function kitty_conf_zoom(delta)
   local conf = vim.fn.expand("~/.config/kitty/kitty.conf")
   if vim.fn.filereadable(conf) ~= 1 then
@@ -403,12 +411,29 @@ local function kitty_conf_zoom(delta)
     if prefix then
       local cur = line:match("[%d.]+$")
       if cur then
-        lines[i] = prefix .. string.format("%g", math.max(5, tonumber(cur) + delta))
+        lines[i] = prefix .. string.format("%g", math.max(min_size, tonumber(cur) + delta))
         vim.fn.writefile(lines, conf)
       end
       return
     end
   end
+end
+
+local function kitty_socket_zoom(sock, delta)
+  local to = sock:match("^[a-z]+:") and sock or "unix:" .. sock
+  local cur = nil
+  local conf = vim.fn.expand("~/.config/kitty/kitty.conf")
+  if vim.fn.filereadable(conf) == 1 then
+    for _, line in ipairs(vim.fn.readfile(conf)) do
+      local size = line:match("^%s*font_size%s+([%d.]+)")
+      if size then
+        cur = tonumber(size)
+        break
+      end
+    end
+  end
+  local target = cur and math.max(min_size, cur + delta) or math.abs(delta)
+  vim.fn.system("kitty @ --to " .. to .. " set-font-size " .. target)
 end
 
 local function zoom_font(delta)
@@ -418,9 +443,7 @@ local function zoom_font(delta)
   if vim.env.KITTY_WINDOW_ID then
     local sock = vim.env.KITTY_LISTEN_ON or (vim.env.XDG_RUNTIME_DIR and vim.env.XDG_RUNTIME_DIR .. "/kitty.sock")
     if sock then
-      local to = sock:match("^[a-z]+:") and sock or "unix:" .. sock
-      local sign = delta > 0 and "+" or "-"
-      vim.fn.system("kitty @ --to " .. to .. " set-font-size " .. sign .. math.abs(delta))
+      kitty_socket_zoom(sock, delta)
       if vim.v.shell_error == 0 then
         return
       end
@@ -433,9 +456,9 @@ local function zoom_font(delta)
   if current ~= "" then
     local size = current:match(":[Hh](%d+)")
     if size then
-      vim.o.guifont = current:gsub(":[Hh]%d+", ":h" .. math.max(6, tonumber(size) + delta))
+      vim.o.guifont = current:gsub(":[Hh]%d+", ":h" .. math.max(min_size, tonumber(size) + delta))
     else
-      vim.o.guifont = current .. ":h" .. math.max(6, 12 + delta)
+      vim.o.guifont = current .. ":h" .. math.max(min_size, 12 + delta)
     end
   end
 end

@@ -6,6 +6,34 @@ local function get_work_dir()
   return dir
 end
 
+local function tree_api()
+  local ok, api = pcall(require, "nvim-tree.api")
+  if not ok then
+    return nil
+  end
+  return api
+end
+
+local function tree_is_visible()
+  local api = tree_api()
+  return api ~= nil and api.tree.is_visible()
+end
+
+local function reopen_tree_if_was_open(was_open)
+  if not was_open then
+    return
+  end
+  -- Open the tree the way nvim-tree's own toggle does (lib.open), which both
+  -- redraws the tree contents and re-initializes the explorer if the buffer
+  -- set load wiped it. Then jump back to the previous window so focus stays
+  -- on the first buffer of the loaded set instead of the tree.
+  local ok, lib = pcall(require, "nvim-tree.lib")
+  if ok then
+    lib.open()
+    vim.cmd("noautocmd wincmd p")
+  end
+end
+
 -- Mimic sublime's save_open_tabs: write currently open file buffers to the
 -- next setN.txt file (N = highest existing + 1).
 function M.save_open_buffers()
@@ -47,6 +75,7 @@ end
 function M.load_buffer_set(n)
   local target_dir = get_work_dir()
   local list_path = vim.fn.fnamemodify(target_dir, ":p") .. "set" .. n .. ".txt"
+  local tree_was_open = tree_is_visible()
 
   if vim.fn.filereadable(list_path) == 0 then
     vim.notify(string.format("Load Buffer Set: %s not found", list_path), vim.log.levels.WARN)
@@ -155,6 +184,7 @@ function M.load_buffer_set(n)
       -- The buffers are already open, in the saved order: just switch to the
       -- first one of the set.
       vim.cmd("buffer " .. path_to_buf[canonical(paths[1])])
+      reopen_tree_if_was_open(tree_was_open)
       return
     end
 
@@ -169,21 +199,15 @@ function M.load_buffer_set(n)
       end
     end
 
-    -- Open the set files in order; each becomes a fresh buffer appended to the
-    -- end of the buffer list, restoring the saved order. Never touch unlisted
-    -- plugin buffers (e.g. nvim-tree, which re-opens itself otherwise).
+    -- Load the set files in order without switching the window for each one
+    -- (a per-file `:edit` re-renders the window every time). `bufadd` creates
+    -- each buffer in place and `bufload` reads the file, firing the usual
+    -- FileType/BufReadPost autocmds so treesitter (and LSP) attach normally.
+    -- Mark them listed since `bufadd` creates unlisted buffers.
     for _, p in ipairs(paths) do
-      vim.cmd("edit " .. vim.fn.fnameescape(p))
-    end
-
-    -- The scratch buffer above is normally reused by the first `:edit`; if a
-    -- leftover empty buffer remains, wipe it (it is no longer shown in the
-    -- window, so deleting it cannot close the last window).
-    local cur_buf = vim.api.nvim_win_get_buf(0)
-    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-      if buf ~= cur_buf and is_listed(buf) and vim.api.nvim_buf_get_name(buf) == "" then
-        pcall(vim.api.nvim_buf_delete, buf, { force = true })
-      end
+      local buf = vim.fn.bufadd(vim.fn.fnamemodify(p, ":p"))
+      vim.fn.bufload(buf)
+      vim.api.nvim_set_option_value("buflisted", true, { buf = buf })
     end
 
     -- Switch to the first buffer of the set.
@@ -194,7 +218,18 @@ function M.load_buffer_set(n)
         break
       end
     end
+
+    -- The scratch buffer above is no longer shown in the window, so wipe any
+    -- leftover empty buffers (deleting them cannot close the last window).
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+      if is_listed(buf) and vim.api.nvim_buf_get_name(buf) == "" then
+        pcall(vim.api.nvim_buf_delete, buf, { force = true })
+      end
+    end
   end
+
+  -- Restore nvim-tree if it was open before the buffer set was loaded.
+  reopen_tree_if_was_open(tree_was_open)
 end
 
 function M.delete_buffer_set(n)

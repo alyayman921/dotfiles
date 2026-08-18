@@ -56,7 +56,7 @@ nvim_tree.setup {
     exclude = {},
   },
   git = {
-    enable = true,
+    enable = false,
     ignore = false,
     timeout = 400,
   },
